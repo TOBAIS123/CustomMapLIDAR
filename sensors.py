@@ -3,7 +3,7 @@ import math
 import numpy as np
 
 
-def uncertainty_add( distance, angle,sigma):
+def add_uncert( distance, angle,sigma):
     mean = np.array([distance, angle])
     covariance = np.diag(sigma ** 2)
     distance, angle = np.random.multivariate_normal(mean, covariance)
@@ -13,10 +13,10 @@ def uncertainty_add( distance, angle,sigma):
 
 class LaserSensor:
 
-    def __init__(self,Range,map,uncertainty):
+    def __init__(self,Range,map,unc):
         self.Range=Range
         self.speed = 4  # rounds per sencond
-        self.sigma = np.array([uncertainty[0], uncertainty[1]])
+        self.sigma = np.array([unc[0], unc[1]])
         self.position=(0,0)
         self.map=map
         self.W,self.H = pygame.display.get_surface().get_size()
@@ -39,7 +39,7 @@ class LaserSensor:
                     color=self.map.get_at((x,y))
                     if (color[0],color[1],color[2]) == (0,0,0):
                         distance=self.distance((x,y))
-                        output= uncertainty_add(distance, angle, self.sigma)
+                        output= add_uncert(distance, angle, self.sigma)
                         output.append(self.position)
                         # store the mesurements
                         data.append(output)
@@ -47,4 +47,4 @@ class LaserSensor:
         if len(data)>0:
             return data
         else:
-            return False
+            return False 
