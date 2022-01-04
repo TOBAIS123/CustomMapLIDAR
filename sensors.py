@@ -21,6 +21,7 @@ class LaserSensor:
         self.map=map
         self.W,self.H = pygame.display.get_surface().get_size()
         self.sensedObstacles=[]
+
     def distance(self,obstaclePosition):
         px=(obstaclePosition[0]-self.position[0])**2
         py=(obstaclePosition[1]-self.position[1])**2
