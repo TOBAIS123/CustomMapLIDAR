@@ -21,7 +21,6 @@ class buildEnvironment:
     def AD2pos(self,distance,angle,robotPosition):
         x = distance * math.cos(angle)+robotPosition[0]
         y = -distance * math.sin(angle)+robotPosition[1]
-        #print(f'angle = {angle} , distance = {distance} , target = {(x,y)}')
         return (int(x),int(y))
         
 
@@ -29,7 +28,7 @@ class buildEnvironment:
         self.infomap=self.map.copy()
         for point in self.pointCloud:
             self.infomap.set_at((int(point[0]),int(point[1])),(0,255,0))
-                #pygame.draw.circle(self.infomap, (255,0,0), point, 1, 0)
+            pygame.draw.circle(self.infomap, (255,0,0), point, 1, 0)
 
     def dataStorage(self,data):
         if data!=False:
