@@ -28,6 +28,3 @@ while running :
     
 pygame.quit()
 
-
-
-
