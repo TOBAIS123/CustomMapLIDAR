@@ -1,9 +1,9 @@
-import world,sensors
+import world,sensors,features
 import pygame
 environment=world.buildEnvironment((600,1200))
 environment.originalMap = environment.map.copy()
 laser=sensors.LaserSensor(200,environment.originalMap,unc=(0.5,0.01))
-environment.map.fill((0,0,0))
+environment.map.fill((255,255,255))
 environment.infomap = environment.map.copy()
 
 running =True
@@ -27,4 +27,3 @@ while running :
     pygame.display.update()
     
 pygame.quit()
-

@@ -1,7 +1,11 @@
 import numpy as np
 import math
 from fractions import Fraction
+from pygame.constants import APPACTIVE
+from pygame.draw import line
 from scipy.odr import *
+from scipy.odr import ODR
+from scipy.odr.odrpack import Model, RealData
 
 class featuresDetection:
     def __init__(self):
@@ -12,8 +16,10 @@ class featuresDetection:
         self.PMIN=20
         self.GMAX=20
         self.SEED_SEGEMENTS=[]
-        self.LINE_SEGEMENTS=None
-        self.NP=len(self.LASERPOIUNTS)-1
+        self.LINE_SEGEMENTS=[]
+        self.LASERPOINTS=[]
+        self.LINE_PARAMS=None
+        self.NP=len(self.LASERPOINTS)-1
         self.LMIN=20 # min len of line segements
         self.LR=0 # length of line
         self.PR=0 # num of pinged points on line
@@ -107,8 +113,8 @@ class featuresDetection:
 
 
     def odr_fit(self, laser_points):
-        x = np. array ([i [0][0] for i in laser_points])
-        y = np. array ([i [0][1] for i in laser_points])
+        x = np.array ([i [0][0] for i in laser_points])
+        y = np.array ([i [0][1] for i in laser_points])
 
         # create a model for fitting.
         linear_model = Model(self.linear_func)
@@ -117,3 +123,90 @@ class featuresDetection:
         data= RealData(x, y)
         
         # Set up ODR with the model and data.
+        odr_model= ODR(data,linear_model,beta0=[0.,0.])
+
+        # regression model
+        out=odr_model.run()
+        m,b=out.beta
+        return m,b
+
+    def predictPoint(self, line_params,sensed_point,robotpos):
+        m,b=self.points_2line(robotpos,sensed_point)
+        params1=self.lineForm_Si2G(m,b)
+        predx,predy=self.line_interesect_general(params1,line_params)
+        return predx, predy
+
+    def seed_segment_detection(self,robot_position, break_point_ind):
+        flag=True
+        self.NP=max(0,self.NP)
+        self.SEED_SEGEMENTS=[]
+        for i in range(break_point_ind, (self.NP-self.PMIN)):
+            predicted_points_to_draw=[]
+            j=i+self.SNUM
+            m,c=self.odr_fit(self.LASERPOINTS[i:j])
+
+            params=self.lineForm_Si2G(m,c)
+
+            for k in range(i,j):
+                predicted_points=self.predictPoint(params,self.LASERPOINTS[k][0],robot_position)
+                predicted_points_to_draw.append(predicted_points)
+                d1=self.dist_point2point(predicted_points, self.LASERPOINTS[k][0])
+
+                if d1> self.DELTA:
+                    flag=False
+                    break
+                d2=self.dist_point2line(params, predicted_points)
+
+                if d2 > self.EPSILON:
+                    flag=False
+                    break
+            if flag:
+                self.LINE_PARAMS=params
+                return [self.LASERPOINTS[i:j],predicted_points_to_draw,(i,j)]
+        return False
+
+    def seed_segement_growing(self, indicies, break_points):
+        line_eq=self.LINE_PARAMS
+        i,j=indicies
+        # start and end of points in line segement
+        PB,PF = max(break_points,i-1),min(j+1,len(self.LASERPOINTS)-1)
+
+        while self.dist_point2line(line_eq,self.LASERPOINTS[PF][0]) <self.EPSILON:
+            if PF>self.NP-1:
+                break
+            else:
+                m,b=self.odr_fit(self.LASERPOINTS[PB:PF])
+                line_eq=self.lineForm_Si2G(m,b)
+
+                POINT=self.LASERPOINTS[PF][0]
+
+            PF=PF+1
+            NEXTPOINT= self.LASERPOINTS[PF][0]
+            if self.dist_point2point(POINT,NEXTPOINT)> self.GMAX:
+                    break
+            PF=PF-1
+
+            while self.dist_point2line(line_eq, self.LASERPOINTS[PB][0]) < self.EPSILON:
+                if PB<break_points:
+                    break
+                else:
+                    m,b=self.odr_fit(self.LASERPOINTS[PB:PF])
+                    line_eq=self.lineForm_Si2G(m,b)
+                    POINT=self.LASERPOINTS[PB][0]
+
+                PB=PB-1
+                NEXTPOINT=self.LASERPOINTS[PB][0]
+                if self.dist_point2point(POINT,NEXTPOINT) > self.GMAX:
+                    break
+            PB+=1
+            LR=self.dist_point2point(self.LASERPOINTS[PB][0], self.LASERPOINTS[PF][0])
+            PR=len(self.LASERPOINTS[PB:PF])
+
+            if (LR>= self.LMIN) and (PR>=self.PMIN):
+                self.LINE_PARAMS=line_eq
+                m,b=self.lineForm_G2SI(line_eq[0],line_eq[1],line_eq[2])
+                self.two_points=self.line_2points(m,b)
+                self.LINE_SEGEMENTS.append((self.LASERPOINTS[PB+1][0],self.LASERPOINTS[PF-1][0]))
+                return [self.LASERPOINTS[PB:PF], self.two_points, (self.LASERPOINTS[PB+1][0],self.LASERPOINTS[PF-1][0]), PF, line_eq, (m,b)]
+            else:
+                return False
