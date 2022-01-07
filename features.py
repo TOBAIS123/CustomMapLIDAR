@@ -194,23 +194,22 @@ class featuresDetection:
                 else:
                     m, b = self.odr_fit(self.LASERPOINTS[PB:PF])
                     line_eq = self.lineForm_Si2G(m, b)
+                    
                     POINT = self.LASERPOINTS[PB][0]
 
                 PB = PB-1
                 NEXTPOINT = self.LASERPOINTS[PB][0]
                 if self.dist_point2point(POINT, NEXTPOINT) > self.GMAX:
                     break
-            PB += 1
-            LR = self.dist_point2point(
-                self.LASERPOINTS[PB][0], self.LASERPOINTS[PF][0])
+            PB = PB+ 1
+            LR = self.dist_point2point(self.LASERPOINTS[PB][0], self.LASERPOINTS[PF][0])
             PR = len(self.LASERPOINTS[PB:PF])
 
             if (LR >= self.LMIN) and (PR >= self.PMIN):
                 self.LINE_PARAMS = line_eq
                 m, b = self.lineForm_G2SI(line_eq[0], line_eq[1], line_eq[2])
                 self.two_points = self.line_2points(m, b)
-                self.LINE_SEGEMENTS.append(
-                    (self.LASERPOINTS[PB+1][0], self.LASERPOINTS[PF-1][0]))
+                self.LINE_SEGEMENTS.append((self.LASERPOINTS[PB+1][0], self.LASERPOINTS[PF-1][0]))
                 return [self.LASERPOINTS[PB:PF], self.two_points, (self.LASERPOINTS[PB+1][0], self.LASERPOINTS[PF-1][0]), PF, line_eq, (m, b)]
             else:
                 return False

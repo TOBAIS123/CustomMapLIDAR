@@ -51,8 +51,7 @@ while running:
                 seedSegment = seedSeg[0]
                 PREDICTED_POINTS_TODRAW = seedSeg[1]
                 INDICES = seedSeg[2]
-                results = FeatureMap.seed_segement_growing(
-                    INDICES, BREAK_POINT_IND)
+                results = FeatureMap.seed_segement_growing(INDICES, BREAK_POINT_IND)
                 if results == False:
                     BREAK_POINT_IND = INDICES[1]
                     continue
@@ -63,15 +62,12 @@ while running:
                     OUTERMOST = results[2]
                     BREAK_POINT_IND = results[3]
 
-                    ENDPOINTS[0] = FeatureMap.projection_point2line(
-                        OUTERMOST[0], m, c)
-                    ENDPOINTS[1] = FeatureMap.projection_point2line(
-                        OUTERMOST[1], m, c)
+                    ENDPOINTS[0] = FeatureMap.projection_point2line(OUTERMOST[0], m, c)
+                    ENDPOINTS[1] = FeatureMap.projection_point2line(OUTERMOST[1], m, c)
 
                     COLOR = rand_color()
                     for point in line_seg:
-                        environment.infomap.set_at(
-                            (int(point[0][0]), int(point[0[1]]), (0, 255, 0)))
+                        environment.infomap.set_at((int(point[0][0]), int(point[0][1]), (0, 255, 0)))
                         pygame.draw.circle(environment.infomap, COLOR, (int(
                             point[0][0]), int(point[0][1])), 2, 0)
                     pygame.draw.line(environment.infomap,
