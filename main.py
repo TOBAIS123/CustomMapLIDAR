@@ -65,15 +65,22 @@ while running:
                     ENDPOINTS[0] = FeatureMap.projection_point2line(OUTERMOST[0], m, c)
                     ENDPOINTS[1] = FeatureMap.projection_point2line(OUTERMOST[1], m, c)
 
-                    COLOR = rand_color()
-                    for point in line_seg:
-                        environment.infomap.set_at((int(point[0][0]), int(point[0][1]), (0, 255, 0)))
-                        pygame.draw.circle(environment.infomap, COLOR, (int(
-                            point[0][0]), int(point[0][1])), 2, 0)
-                    pygame.draw.line(environment.infomap,
-                                     (255, 0, 0), ENDPOINTS[0], ENDPOINTS[1], 2)
+                    FeatureMap.FEATURES.append([[m,c],ENDPOINTS])
+                    pygame.draw.line(environment.infomap,(0, 255, 0), ENDPOINTS[0], ENDPOINTS[1], 1)
                     environment.dataStorage(sensor_data)
-                    environment.show_sensorData()
+
+                    FeatureMap.FEATURES=FeatureMap.lineFeature2point()
+                    features.landmark_association(FeatureMap.FEATURES)
+
+                    for landmark in features.Landmarks:
+                        pygame.draw.line(environment.infomap,(0, 0, 255), landmark[1][0], landmark[1][1], 2)
+                        
+
+                    #COLOR = rand_color()
+                    #for point in line_seg:
+                        #environment.infomap.set_at((int(point[0][0]), int(point[0][1])), (0, 255, 0))
+                        #pygame.draw.circle(environment.infomap, COLOR, (int(point[0][0]), int(point[0][1])), 2, 0)
+
                     environment.map.blit(environment.infomap, (0, 0))
                     pygame.display.update()
 
