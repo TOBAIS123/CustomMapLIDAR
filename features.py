@@ -11,7 +11,7 @@ Landmarks=[]
 class featuresDetection:
     def __init__(self):
         # init vars
-        self.EPSILON = 10
+        self.EPSILON = 20
         self.DELTA = 20
         self.SNUM = 6
         self.PMIN = 20
@@ -21,7 +21,7 @@ class featuresDetection:
         self.LASERPOINTS = []
         self.LINE_PARAMS = None
         self.NP = len(self.LASERPOINTS)-1
-        self.LMIN = 20  # min len of line segements
+        self.LMIN = 10  # min len of line segements
         self.LR = 0  # length of line
         self.PR = 0  # num of pinged points on line
         self.FEATURES=[]
@@ -223,7 +223,7 @@ class featuresDetection:
         return new_rep
 
 def landmark_association(landmarks):
-    thresh=10
+    thresh=7
     for l in landmarks:
 
         flag=False
