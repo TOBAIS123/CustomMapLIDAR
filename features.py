@@ -21,7 +21,7 @@ class featuresDetection:
         self.LASERPOINTS = []
         self.LINE_PARAMS = None
         self.NP = len(self.LASERPOINTS)-1
-        self.LMIN = 10  # min len of line segements
+        self.LMIN = 20  # min len of line segements
         self.LR = 0  # length of line
         self.PR = 0  # num of pinged points on line
         self.FEATURES=[]
@@ -223,7 +223,7 @@ class featuresDetection:
         return new_rep
 
 def landmark_association(landmarks):
-    thresh=7
+    thresh=10
     for l in landmarks:
 
         flag=False
@@ -241,13 +241,17 @@ def landmark_association(landmarks):
         if not flag:
             Landmarks.append(l)
 
-def is_overlap(seg1,seg2):
+def is_overlap(seg1:int,seg2:int)->bool:
+    """
+    >>> is_overlap
+    """
     length1=featuresDetection.dist_point2point(seg1[0],seg1[1])
     length2=featuresDetection.dist_point2point(seg2[0],seg2[1])
     center1=((seg1[0][0]+seg1[1][0])/2, (seg1[0][1]+seg1[1][1])/2)
     center2=((seg2[0][0]+seg2[1][0])/2, (seg2[0][1]+seg2[1][1])/2)
     dist=featuresDetection.dist_point2point(center1,center2)
-    if dist>(length1+length2)/2:
+    if dist > (length1+length2)/2:
         return False
     else:
         return True
+    
