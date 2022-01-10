@@ -76,10 +76,10 @@ while running:
                         pygame.draw.line(environment.infomap,(0, 0, 255), landmark[1][0], landmark[1][1], 2)
                         
 
-                    #COLOR = rand_color()
+                    COLOR = rand_color()
                     #for point in line_seg:
-                    #   environment.infomap.set_at((int(point[0][0]), int(point[0][1])), (0, 255, 0))
-                    #    pygame.draw.circle(environment.infomap, (255,0,0), (int(point[0][0]), int(point[0][1])), 2, 0)
+                        #environment.infomap.set_at((int(point[0][0]), int(point[0][1])), (0, 255, 0))
+                        #pygame.draw.circle(environment.infomap, (255,0,0), (int(point[0][0]), int(point[0][1])), 2, 0)
 
                     environment.map.blit(environment.infomap, (0, 0))
                     pygame.display.update()
