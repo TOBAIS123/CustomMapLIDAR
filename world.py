@@ -4,19 +4,12 @@ class buildEnvironment:
     def __init__(self,MapDimensions):
         pygame.init()
         self.pointCloud=[]
-        self.externalMap=pygame.image.load('map1.png')
+        self.externalMap=pygame.image.load('2d-floor-plan.jpg')
         self.maph, self.mapw = MapDimensions
-        self.MapWindowName = 'RRT path planning'
+        self.MapWindowName = 'LIDAR'
         pygame.display.set_caption(self.MapWindowName)
         self.map = pygame.display.set_mode((self.mapw, self.maph))
-        self.map.blit(self.externalMap,(0,0))
-        # Colors
-        self.black = (0, 0, 0)
-        self.grey = (70, 70, 70)
-        self.Blue = (0, 0, 255)
-        self.Green = (0, 255, 0)
-        self.Red = (255, 0, 0)
-        self.white = (255, 255, 255)
+        self.map.blit(self.externalMap,(-100,-50))
 
     def AD2pos(self,distance,angle,robotPosition):
         x = distance * math.cos(angle)+robotPosition[0]

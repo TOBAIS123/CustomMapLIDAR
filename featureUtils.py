@@ -8,19 +8,19 @@ from scipy.odr.odrpack import Model, RealData
 
 Landmarks=[]
 
-class featuresDetection:
+class findFeatures:
     def __init__(self):
         # init vars
-        self.EPSILON = 20
-        self.DELTA = 20
+        self.EPSI = 20
+        self.DEL = 20
         self.SNUM = 6
         self.PMIN = 20
-        self.GMAX = 20
+        self.LMAX = 20
         self.SEED_SEGEMENTS = []
         self.LINE_SEGEMENTS = []
-        self.LASERPOINTS = []
+        self.LASERNUM = []
         self.LINE_PARAMS = None
-        self.NP = len(self.LASERPOINTS)-1
+        self.NP = len(self.LASERNUM)-1
         self.LMIN = 20  # min len of line segements
         self.LR = 0  # length of line
         self.PR = 0  # num of pinged points on line
@@ -28,7 +28,7 @@ class featuresDetection:
 
     # distance between 2 points
     @staticmethod
-    def dist_point2point(point1, point2):
+    def dist_points(point1, point2):
         Px = (point1[0]-point2[0])**2
         Py = (point1[1]-point2[1])**2
         return math.sqrt(Px+Py)
@@ -48,13 +48,13 @@ class featuresDetection:
         return [(x, y), (x2, y2)]
 
     # converts the general form of a line to slope intercept
-    def lineForm_G2SI(self, A, B, C):
+    def general2Slope(self, A, B, C):
         m = -A/B
         B = -C/B
         return m, B
 
     # converts the slope intercept of a line to general form
-    def lineForm_Si2G(self, m, B):
+    def slope2General(self, m, B):
         A, B, C = -m, 1, -B
         if A < 0:
             A, B, C = -A, -B, -C
@@ -93,20 +93,20 @@ class featuresDetection:
         intersection_y = m2 * intersection_x + c2
         return intersection_x, intersection_y
 
-    def AD2pos(self, distance, angle, robot_position):
+    def rob_position(self, distance, angle, robot_position):
         x = distance * math.cos(angle) + robot_position[0]
         y = -distance * math.sin(angle) + robot_position[1]
         return (int(x), int(y))
 
-    def laser_points_set(self, data):
-        self.LASERPOINTS = []
+    def set_points(self, data):
+        self.LASERNUM = []
         if not data:
             pass
         else:
             for point in data:
-                coordinates = self.AD2pos(point[0], point[1], point[2])
-                self.LASERPOINTS.append([coordinates, point[1]])
-        self.NP = len(self.LASERPOINTS) - 1
+                coordinates = self.rob_position(point[0], point[1], point[2])
+                self.LASERNUM.append([coordinates, point[1]])
+        self.NP = len(self.LASERNUM) - 1
 
     # Define a function (quadratic in our case) to fit the data with.
 
@@ -114,7 +114,7 @@ class featuresDetection:
         m, b = p
         return m * x + b
 
-    def odr_fit(self, laser_points):
+    def fitpoints_odr(self, laser_points):
         x = np.array([i[0][0] for i in laser_points])
         y = np.array([i[0][1] for i in laser_points])
 
@@ -134,83 +134,83 @@ class featuresDetection:
 
     def predictPoint(self, line_params, sensed_point, robotpos):
         m, b = self.points_21ine(robotpos, sensed_point)
-        params1 = self.lineForm_Si2G(m, b)
+        params1 = self.slope2General(m, b)
         predx, predy = self.line_interesect_general(params1, line_params)
         return predx, predy
 
-    def seed_segment_detection(self, robot_position, break_point_ind):
+    def find_segement(self, robot_position, break_point_ind):
         flag = True
         self.NP = max(0, self.NP)
         self.SEED_SEGEMENTS = []
         for i in range(break_point_ind, (self.NP-self.PMIN)):
             predicted_points_to_draw = []
             j = i+self.SNUM
-            m, c = self.odr_fit(self.LASERPOINTS[i:j])
+            m, c = self.fitpoints_odr(self.LASERNUM[i:j])
 
-            params = self.lineForm_Si2G(m, c)
+            params = self.slope2General(m, c)
 
             for k in range(i, j):
-                predicted_points = self.predictPoint(params, self.LASERPOINTS[k][0], robot_position)
+                predicted_points = self.predictPoint(params, self.LASERNUM[k][0], robot_position)
                 predicted_points_to_draw.append(predicted_points)
-                d1 = self.dist_point2point(predicted_points, self.LASERPOINTS[k][0])
+                d1 = self.dist_points(predicted_points, self.LASERNUM[k][0])
 
-                if d1 > self.DELTA:
+                if d1 > self.DEL:
                     flag = False
                     break
-                d2 = self.dist_point2line(params, self.LASERPOINTS[k][0])
+                d2 = self.dist_point2line(params, self.LASERNUM[k][0])
 
-                if d2 > self.EPSILON:
+                if d2 > self.EPSI:
                     flag = False
                     break
             if flag:
                 self.LINE_PARAMS = params
-                return [self.LASERPOINTS[i:j], predicted_points_to_draw, (i, j)]
+                return [self.LASERNUM[i:j], predicted_points_to_draw, (i, j)]
         return False
 
-    def seed_segement_growing(self, indicies, break_points):
+    def generate_segement(self, indicies, break_points):
         line_eq = self.LINE_PARAMS
         i, j = indicies
         # start and end of points in line segement
-        PB, PF = max(break_points, i-1), min(j+1, len(self.LASERPOINTS)-1)
+        PB, PF = max(break_points, i-1), min(j+1, len(self.LASERNUM)-1)
 
-        while self.dist_point2line(line_eq, self.LASERPOINTS[PF][0]) < self.EPSILON:
+        while self.dist_point2line(line_eq, self.LASERNUM[PF][0]) < self.EPSI:
             if PF > self.NP-1:
                 break
             else:
-                m, b = self.odr_fit(self.LASERPOINTS[PB:PF])
-                line_eq = self.lineForm_Si2G(m, b)
+                m, b = self.fitpoints_odr(self.LASERNUM[PB:PF])
+                line_eq = self.slope2General(m, b)
 
-                POINT = self.LASERPOINTS[PF][0]
+                POINT = self.LASERNUM[PF][0]
 
             PF = PF+1
-            NEXTPOINT = self.LASERPOINTS[PF][0]
-            if self.dist_point2point(POINT, NEXTPOINT) > self.GMAX:
+            NEXTPOINT = self.LASERNUM[PF][0]
+            if self.dist_points(POINT, NEXTPOINT) > self.LMAX:
                 break
         PF = PF-1
 
-        while self.dist_point2line(line_eq, self.LASERPOINTS[PB][0]) < self.EPSILON:
+        while self.dist_point2line(line_eq, self.LASERNUM[PB][0]) < self.EPSI:
             if PB < break_points:
                 break
             else:
-                m, b = self.odr_fit(self.LASERPOINTS[PB:PF])
-                line_eq = self.lineForm_Si2G(m, b)
-                POINT = self.LASERPOINTS[PB][0]
+                m, b = self.fitpoints_odr(self.LASERNUM[PB:PF])
+                line_eq = self.slope2General(m, b)
+                POINT = self.LASERNUM[PB][0]
 
             PB = PB-1
-            NEXTPOINT = self.LASERPOINTS[PB][0]
-            if self.dist_point2point(POINT, NEXTPOINT) > self.GMAX:
+            NEXTPOINT = self.LASERNUM[PB][0]
+            if self.dist_points(POINT, NEXTPOINT) > self.LMAX:
                 break
 
         PB = PB+ 1
-        LR = self.dist_point2point(self.LASERPOINTS[PB][0], self.LASERPOINTS[PF][0])
-        PR = len(self.LASERPOINTS[PB:PF])
+        LR = self.dist_points(self.LASERNUM[PB][0], self.LASERNUM[PF][0])
+        PR = len(self.LASERNUM[PB:PF])
 
         if (LR >= self.LMIN) and (PR >= self.PMIN):
             self.LINE_PARAMS = line_eq
-            m, b = self.lineForm_G2SI(line_eq[0], line_eq[1], line_eq[2])
+            m, b = self.general2Slope(line_eq[0], line_eq[1], line_eq[2])
             self.two_points = self.line_2points(m, b)
-            self.LINE_SEGEMENTS.append((self.LASERPOINTS[PB+1][0], self.LASERPOINTS[PF-1][0]))
-            return [self.LASERPOINTS[PB:PF], self.two_points, (self.LASERPOINTS[PB+1][0], self.LASERPOINTS[PF-1][0]), PF, line_eq, (m, b)]
+            self.LINE_SEGEMENTS.append((self.LASERNUM[PB+1][0], self.LASERNUM[PF-1][0]))
+            return [self.LASERNUM[PB:PF], self.two_points, (self.LASERNUM[PB+1][0], self.LASERNUM[PF-1][0]), PF, line_eq, (m, b)]
         else:
             return False
 
@@ -228,7 +228,7 @@ def landmark_association(landmarks):
 
         flag=False
         for i, Landmark in enumerate(Landmarks):
-            dist=featuresDetection.dist_point2point(l[2],Landmark[2])
+            dist=findFeatures.dist_points(l[2],Landmark[2])
             if dist < thresh:
                 if not is_overlap(l[1],Landmark[1]):
                     continue
@@ -245,11 +245,11 @@ def is_overlap(seg1:int,seg2:int)->bool:
     """
     >>> is_overlap
     """
-    length1=featuresDetection.dist_point2point(seg1[0],seg1[1])
-    length2=featuresDetection.dist_point2point(seg2[0],seg2[1])
+    length1=findFeatures.dist_points(seg1[0],seg1[1])
+    length2=findFeatures.dist_points(seg2[0],seg2[1])
     center1=((seg1[0][0]+seg1[1][0])/2, (seg1[0][1]+seg1[1][1])/2)
     center2=((seg2[0][0]+seg2[1][0])/2, (seg2[0][1]+seg2[1][1])/2)
-    dist=featuresDetection.dist_point2point(center1,center2)
+    dist=findFeatures.dist_points(center1,center2)
     if dist > (length1+length2)/2:
         return False
     else:
