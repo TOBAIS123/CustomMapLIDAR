@@ -6,12 +6,13 @@ from scipy.odr import *
 from scipy.odr import ODR
 from scipy.odr.odrpack import Model, RealData
 
-Landmarks=[]
+Landmarks = []
+
 
 class findFeatures:
     def __init__(self):
         # init vars
-        self.EPSI = 20
+        self.EPSI = 10
         self.DEL = 20
         self.SNUM = 6
         self.PMIN = 20
@@ -24,7 +25,7 @@ class findFeatures:
         self.LMIN = 20  # min len of line segements
         self.LR = 0  # length of line
         self.PR = 0  # num of pinged points on line
-        self.FEATURES=[]
+        self.FEATURES = []
 
     # distance between 2 points
     @staticmethod
@@ -120,11 +121,7 @@ class findFeatures:
 
         # create a model for fitting.
         linear_model = Model(self.linear_func)
-
-        # create a RealData object using our initiated data from above.
         data = RealData(x, y)
-
-        # Set up ODR with the model and data.
         odr_model = ODR(data, linear_model, beta0=[0., 0.])
 
         # regression model
@@ -150,7 +147,8 @@ class findFeatures:
             params = self.slope2General(m, c)
 
             for k in range(i, j):
-                predicted_points = self.predictPoint(params, self.LASERNUM[k][0], robot_position)
+                predicted_points = self.predictPoint(
+                    params, self.LASERNUM[k][0], robot_position)
                 predicted_points_to_draw.append(predicted_points)
                 d1 = self.dist_points(predicted_points, self.LASERNUM[k][0])
 
@@ -201,7 +199,7 @@ class findFeatures:
             if self.dist_points(POINT, NEXTPOINT) > self.LMAX:
                 break
 
-        PB = PB+ 1
+        PB = PB + 1
         LR = self.dist_points(self.LASERNUM[PB][0], self.LASERNUM[PF][0])
         PR = len(self.LASERNUM[PB:PF])
 
@@ -209,49 +207,49 @@ class findFeatures:
             self.LINE_PARAMS = line_eq
             m, b = self.general2Slope(line_eq[0], line_eq[1], line_eq[2])
             self.two_points = self.line_2points(m, b)
-            self.LINE_SEGEMENTS.append((self.LASERNUM[PB+1][0], self.LASERNUM[PF-1][0]))
+            self.LINE_SEGEMENTS.append(
+                (self.LASERNUM[PB+1][0], self.LASERNUM[PF-1][0]))
             return [self.LASERNUM[PB:PF], self.two_points, (self.LASERNUM[PB+1][0], self.LASERNUM[PF-1][0]), PF, line_eq, (m, b)]
         else:
             return False
 
     def lineFeature2point(self):
-        new_rep=[] #representation of feature
+        new_rep = []  # representation of feature
 
         for feature in self.FEATURES:
-            projection=self.projection_point2line((0,0),feature[0][0], feature[0][1])
-            new_rep.append([feature[0],feature[1],projection])
+            projection = self.projection_point2line(
+                (0, 0), feature[0][0], feature[0][1])
+            new_rep.append([feature[0], feature[1], projection])
         return new_rep
 
+
 def landmark_association(landmarks):
-    thresh=10
+    thresh = 10
     for l in landmarks:
 
-        flag=False
+        flag = False
         for i, Landmark in enumerate(Landmarks):
-            dist=findFeatures.dist_points(l[2],Landmark[2])
+            dist = findFeatures.dist_points(l[2], Landmark[2])
             if dist < thresh:
-                if not is_overlap(l[1],Landmark[1]):
+                if not is_overlap(l[1], Landmark[1]):
                     continue
                 else:
                     Landmarks.pop(i)
-                    Landmarks.insert(i,l)
-                    flag=True
-                    
+                    Landmarks.insert(i, l)
+                    flag = True
+
                     break
         if not flag:
             Landmarks.append(l)
 
-def is_overlap(seg1:int,seg2:int)->bool:
-    """
-    >>> is_overlap
-    """
-    length1=findFeatures.dist_points(seg1[0],seg1[1])
-    length2=findFeatures.dist_points(seg2[0],seg2[1])
-    center1=((seg1[0][0]+seg1[1][0])/2, (seg1[0][1]+seg1[1][1])/2)
-    center2=((seg2[0][0]+seg2[1][0])/2, (seg2[0][1]+seg2[1][1])/2)
-    dist=findFeatures.dist_points(center1,center2)
+
+def is_overlap(seg1, seg2):
+    length1 = findFeatures.dist_points(seg1[0], seg1[1])
+    length2 = findFeatures.dist_points(seg2[0], seg2[1])
+    center1 = ((seg1[0][0]+seg1[1][0])/2, (seg1[0][1]+seg1[1][1])/2)
+    center2 = ((seg2[0][0]+seg2[1][0])/2, (seg2[0][1]+seg2[1][1])/2)
+    dist = findFeatures.dist_points(center1, center2)
     if dist > (length1+length2)/2:
         return False
     else:
         return True
-    
