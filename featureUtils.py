@@ -243,7 +243,10 @@ def landmark_association(landmarks):
             Landmarks.append(l)
 
 
-def is_overlap(seg1, seg2):
+def is_overlap(seg1: int, seg2: int) -> bool:
+    """
+    >>> is_overlap
+    """
     length1 = findFeatures.dist_points(seg1[0], seg1[1])
     length2 = findFeatures.dist_points(seg2[0], seg2[1])
     center1 = ((seg1[0][0]+seg1[1][0])/2, (seg1[0][1]+seg1[1][1])/2)
